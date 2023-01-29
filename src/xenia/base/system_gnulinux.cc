@@ -31,6 +31,28 @@ void LaunchWebBrowser(const std::string_view url) {
 
 void LaunchFileExplorer(const std::filesystem::path& path) { assert_always(); }
 
+const char* TitleForMessageBoxType(SimpleMessageBoxType type) {
+  switch (type) {
+    case SimpleMessageBoxType::Help:
+      return "Xenia Help";
+    case SimpleMessageBoxType::Warning:
+      return "Xenia Warning";
+    case SimpleMessageBoxType::Error:
+      return "Xenia Error";
+  }
+}
+
+Uint32 FlagsForMessageBoxType(SimpleMessageBoxType type) {
+  switch (type) {
+    case SimpleMessageBoxType::Help:
+      return SDL_MESSAGEBOX_INFORMATION;
+    case SimpleMessageBoxType::Warning:
+      return SDL_MESSAGEBOX_WARNING;
+    case SimpleMessageBoxType::Error:
+      return SDL_MESSAGEBOX_ERROR;
+  }
+}
+
 void ShowSimpleMessageBox(SimpleMessageBoxType type, std::string_view message) {
   void* libsdl2 = dlopen("libSDL2.so", RTLD_LAZY | RTLD_LOCAL);
   assert_not_null(libsdl2);
@@ -40,27 +62,11 @@ void ShowSimpleMessageBox(SimpleMessageBoxType type, std::string_view message) {
             dlsym(libsdl2, "SDL_ShowSimpleMessageBox"));
     assert_not_null(pSDL_ShowSimpleMessageBox);
     if (pSDL_ShowSimpleMessageBox) {
-      Uint32 flags;
-      const char* title;
+      const Uint32 flags = FlagsForMessageBoxType(type);
+      const char* title = TitleForMessageBoxType(type);
       char* message_copy = reinterpret_cast<char*>(alloca(message.size() + 1));
       std::memcpy(message_copy, message.data(), message.size());
       message_copy[message.size()] = '\0';
-
-      switch (type) {
-        default:
-        case SimpleMessageBoxType::Help:
-          title = "Xenia Help";
-          flags = SDL_MESSAGEBOX_INFORMATION;
-          break;
-        case SimpleMessageBoxType::Warning:
-          title = "Xenia Warning";
-          flags = SDL_MESSAGEBOX_WARNING;
-          break;
-        case SimpleMessageBoxType::Error:
-          title = "Xenia Error";
-          flags = SDL_MESSAGEBOX_ERROR;
-          break;
-      }
       pSDL_ShowSimpleMessageBox(flags, title, message_copy, NULL);
     }
     dlclose(libsdl2);
