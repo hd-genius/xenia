@@ -53,6 +53,13 @@ Uint32 FlagsForMessageBoxType(SimpleMessageBoxType type) {
   }
 }
 
+char* StringViewToCharPointer(std::string_view original) {
+  char* converted = reinterpret_cast<char*>(alloca(original.size() + 1));
+  std::memcpy(converted, original.data(), original.size());
+  converted[original.size()] = '\0';
+  return converted;
+}
+
 void ShowSimpleMessageBox(SimpleMessageBoxType type, std::string_view message) {
   void* libsdl2 = dlopen("libSDL2.so", RTLD_LAZY | RTLD_LOCAL);
   assert_not_null(libsdl2);
@@ -64,9 +71,7 @@ void ShowSimpleMessageBox(SimpleMessageBoxType type, std::string_view message) {
     if (pSDL_ShowSimpleMessageBox) {
       const Uint32 flags = FlagsForMessageBoxType(type);
       const char* title = TitleForMessageBoxType(type);
-      char* message_copy = reinterpret_cast<char*>(alloca(message.size() + 1));
-      std::memcpy(message_copy, message.data(), message.size());
-      message_copy[message.size()] = '\0';
+      char* message_copy = StringViewToCharPointer(message);
       pSDL_ShowSimpleMessageBox(flags, title, message_copy, NULL);
     }
     dlclose(libsdl2);
